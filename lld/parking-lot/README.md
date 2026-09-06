@@ -44,6 +44,7 @@
 - **ParkingStrategy** - Defines how the system selects an available parking spot.
 - **FeeStrategy** - Defines how the parking fee is calculated.
 
+## Class Design
 ### Vehicle
 
 `Vehicle` is an abstract base class representing a vehicle entering the parking lot.
@@ -229,7 +230,7 @@ Different parking lots may use different pricing models, such as:
 
 By separating fee calculation from `ParkingLot`, the pricing policy can change independently of the parking workflow.
 
-### Final Class Design
+## Final Class Design
 ```
 abstract class Vehicle {
     -String regnNo
