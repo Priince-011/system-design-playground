@@ -33,7 +33,7 @@
 - **FeeStrategy** - Defines how the parking fee is calculated.
 
 ## Class Design
-```mermaid
+```
 class Vehicle {
     -String regnNo
     -VehicleType type
