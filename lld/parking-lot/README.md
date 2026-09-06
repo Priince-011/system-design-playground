@@ -198,7 +198,7 @@ The ticket records the exit time and can no longer be used for another exit oper
 
 ### ParkingStrategy
 
-`ParkingStrategy` Defines how the system selects an available compatible parking spot.
+`ParkingStrategy` defines how the system selects an available compatible parking spot.
 
 #### Why does it exist?
 
