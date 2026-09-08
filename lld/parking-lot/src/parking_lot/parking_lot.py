@@ -31,25 +31,35 @@ class ParkingLot:
         self.parking_fee_strategy = parking_fee_strategy
     
     def enter(self, vehicle: Vehicle) -> Optional[Ticket]:
+        """Allow vehicle to enter and park in an available compatible spot."""
         parking_spot = self.parking_strategy.find_parking_spot(self.floors, vehicle)
         if parking_spot:
-            parking_spot.park_vehicle(vehicle)
-            ticket = Ticket(vehicle, parking_spot)
-            self.active_tickets[ticket.get_id()] = ticket
-            return ticket
+            try:
+                parking_spot.park_vehicle(vehicle)
+                ticket = Ticket(vehicle, parking_spot)
+                self.active_tickets[ticket.get_id()] = ticket
+                return ticket
+            except ValueError as e:
+                print(f"Failed to park vehicle: {e}")
+                return None
         else:
             print("No available parking spot for the vehicle.")
             return None
     
     def exit(self, ticket_id: str) -> Optional[float]:
+        """Allow vehicle to exit by ticket ID."""
         ticket = self.active_tickets.get(ticket_id)
         if ticket:
-            ticket.set_exit_timestamp()
-            parking_spot = ticket.get_parking_spot()
-            parking_spot.free_parking_spot()
-            fee = self.parking_fee_strategy.calculate_fee(ticket)
-            del self.active_tickets[ticket_id]
-            return fee
+            try:
+                ticket.set_exit_timestamp()
+                parking_spot = ticket.get_parking_spot()
+                parking_spot.free_parking_spot()
+                fee = self.parking_fee_strategy.calculate_fee(ticket)
+                del self.active_tickets[ticket_id]
+                return fee
+            except ValueError as e:
+                print(f"Failed to process exit: {e}")
+                return None
         else:
             print("Invalid ticket ID.")
             return None
