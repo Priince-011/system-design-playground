@@ -1,15 +1,26 @@
-from abc import ABC, abstractmethod
-from .spot_type import SpotType
+from abc import ABC
+from .vehicle_type import VehicleType
 from .vehicle_size import VehicleSize
 
+
 class Vehicle(ABC):
-    def __init__(self, registration_number: str, size: VehicleSize):
+    """Abstract base class for vehicles.
+    
+    Vehicles describe themselves: type, size, registration.
+    They do NOT decide where they can park.
+    ParkingSpot determines compatibility based on size.
+    """
+    
+    def __init__(self, registration_number: str, vehicle_type: VehicleType, size: VehicleSize):
         self.regn_no = registration_number
+        self.vehicle_type = vehicle_type
         self.size = size
 
-    @abstractmethod
-    def can_park_in(self, spot_type: SpotType):
-        pass
-
-    def get_registration_number(self):
+    def get_registration_number(self) -> str:
         return self.regn_no
+    
+    def get_vehicle_type(self) -> VehicleType:
+        return self.vehicle_type
+    
+    def get_size(self) -> VehicleSize:
+        return self.size

@@ -6,7 +6,18 @@ from .ticket import Ticket
 from .parking_strategy import ParkingStrategy
 from .parking_fee_strategy import ParkingFeeStrategy
 
+
 class ParkingLot:
+    """Main orchestrator for parking operations.
+    
+    Responsibilities:
+    - Manage parking floors and spots
+    - Coordinate vehicle entry/exit
+    - Delegate spot selection to ParkingStrategy
+    - Delegate fee calculation to ParkingFeeStrategy
+    - Maintain active tickets
+    """
+    
     def __init__(
         self,
         name: str,
@@ -19,47 +30,77 @@ class ParkingLot:
         self.floors = floors
         self.parking_strategy = parking_strategy
         self.parking_fee_strategy = parking_fee_strategy
-        self.active_tickets: Dict[str, Ticket] = {}  # Maps ticket ID to Ticket Object
+        self.active_tickets: Dict[str, Ticket] = {}
     
-    def add_parking_floor(self, parking_floor: ParkingFloor):
-        self.floors.append(parking_floor)
+    def add_floor(self, floor: ParkingFloor) -> None:
+        self.floors.append(floor)
     
-    def set_parking_strategy(self, parking_strategy: ParkingStrategy):
-        self.parking_strategy = parking_strategy
-
-    def set_parking_fee_strategy(self, parking_fee_strategy: ParkingFeeStrategy):
-        self.parking_fee_strategy = parking_fee_strategy
+    def set_parking_strategy(self, strategy: ParkingStrategy) -> None:
+        self.parking_strategy = strategy
+    
+    def set_parking_fee_strategy(self, strategy: ParkingFeeStrategy) -> None:
+        self.parking_fee_strategy = strategy
     
     def enter(self, vehicle: Vehicle) -> Optional[Ticket]:
-        """Allow vehicle to enter and park in an available compatible spot."""
-        parking_spot = self.parking_strategy.find_parking_spot(self.floors, vehicle)
-        if parking_spot:
-            try:
-                parking_spot.park_vehicle(vehicle)
-                ticket = Ticket(vehicle, parking_spot)
-                self.active_tickets[ticket.get_id()] = ticket
-                return ticket
-            except ValueError as e:
-                print(f"Failed to park vehicle: {e}")
-                return None
-        else:
-            print("No available parking spot for the vehicle.")
+        """Process vehicle entry.
+        
+        Returns:
+            Ticket if spot found and parked successfully, None otherwise.
+        """
+        spot = self.parking_strategy.find_spot(self.floors, vehicle)
+        
+        if not spot:
+            return None
+        
+        try:
+            spot.park(vehicle)
+            ticket = Ticket(vehicle, spot)
+            self.active_tickets[ticket.get_id()] = ticket
+            return ticket
+        except ValueError:
             return None
     
     def exit(self, ticket_id: str) -> Optional[float]:
-        """Allow vehicle to exit by ticket ID."""
+        """Process vehicle exit and calculate fee.
+        
+        Args:
+            ticket_id: The parking ticket ID
+            
+        Returns:
+            Calculated fee if exit successful, None otherwise.
+        """
         ticket = self.active_tickets.get(ticket_id)
-        if ticket:
-            try:
-                ticket.set_exit_timestamp()
-                parking_spot = ticket.get_parking_spot()
-                parking_spot.free_parking_spot()
-                fee = self.parking_fee_strategy.calculate_fee(ticket)
-                del self.active_tickets[ticket_id]
-                return fee
-            except ValueError as e:
-                print(f"Failed to process exit: {e}")
-                return None
-        else:
-            print("Invalid ticket ID.")
+        
+        if not ticket:
             return None
+        
+        try:
+            ticket.mark_exit()
+            spot = ticket.get_parking_spot()
+            spot.remove_vehicle()
+            
+            fee = self.parking_fee_strategy.calculate_fee(ticket)
+            ticket.close()
+            
+            del self.active_tickets[ticket_id]
+            return fee
+        except ValueError:
+            return None
+    
+    def get_available_spots(self) -> int:
+        """Count total available spots across all floors."""
+        count = 0
+        for floor in self.floors:
+            for spot in floor.get_parking_spots():
+                if spot.is_available():
+                    count += 1
+        return count
+    
+    def get_occupied_spots(self) -> int:
+        """Count total occupied spots across all floors."""
+        count = 0
+        for floor in self.floors:
+            for spot in floor.get_parking_spots():
+                if spot.is_occupied():
+                    count += 1
+        return count

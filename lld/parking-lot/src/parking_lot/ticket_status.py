@@ -1,5 +1,12 @@
 from enum import Enum
 
+
 class TicketStatus(Enum):
+    """Ticket lifecycle states.
+    
+    Transitions:
+    ACTIVE -> PAID -> CLOSED
+    """
     ACTIVE = "ACTIVE"
-    COMPLETED = "COMPLETED"
+    PAID = "PAID"
+    CLOSED = "CLOSED"
